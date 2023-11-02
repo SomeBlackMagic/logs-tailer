@@ -33,7 +33,7 @@ RUN go get . && \
 
 ## Use distroless as minimal base image to package the binary
 ## Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:latest
 
 COPY --from=busybox:1.35.0-uclibc /bin/sh /bin/sh
 COPY --from=busybox:1.35.0-uclibc /bin/mkdir /bin/mkdir
@@ -43,7 +43,5 @@ COPY --from=busybox:1.35.0-uclibc /bin/kill /bin/kill
 COPY --from=busybox:1.35.0-uclibc /bin/echo /bin/echo
 
 COPY --from=builder /go/src/k8s.io/SomeBlackMagic/logs-tailer/logs-tailer /
-
-USER nonroot:nonroot
 
 CMD ["/logs-tailer", "-folder"]

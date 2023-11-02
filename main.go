@@ -12,7 +12,7 @@ import (
     "github.com/hpcloud/tail"
 )
 
-var version = "development"
+var version = ""
 var revision = "000000000000000000000000000000"
 
 func main() {
