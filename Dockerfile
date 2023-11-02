@@ -19,15 +19,20 @@ RUN apk update \
 
 WORKDIR /go/src/k8s.io/SomeBlackMagic/logs-tailer
 
+ARG VERSION
+ARG REVISION
+
 COPY . .
 
 RUN go get . && \
     CGO_ENABLED=0 go build -a -installsuffix cgo \
-	-ldflags "-s -w" \
-	-o logs-tailer .
+    -ldflags "-s -w" \
+    -ldflags="-X 'main.version=${VERSION}'" \
+    -ldflags="-X 'main.revision=${REVISION}'" \
+    -o logs-tailer .
 
-# Use distroless as minimal base image to package the binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
+## Use distroless as minimal base image to package the binary
+## Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=busybox:1.35.0-uclibc /bin/sh /bin/sh

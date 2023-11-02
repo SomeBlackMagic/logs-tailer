@@ -12,7 +12,12 @@ import (
     "github.com/hpcloud/tail"
 )
 
+var version = "development"
+var revision = "000000000000000000000000000000"
+
 func main() {
+    fmt.Printf("Starting Logs Tailer Version: %s\n", version)
+
     folderPath := flag.String("folder", ".", "Path to files folder")
     flag.Parse()
 
@@ -80,9 +85,6 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
         }
     }
 }
-
-
-
 
 func processFile(filePath string) {
     fmt.Println("New file created:", filePath)
