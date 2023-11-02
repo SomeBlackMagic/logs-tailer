@@ -33,6 +33,4 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /go/src/k8s.io/SomeBlackMagic/logs-tailer/logs-tailer /
 USER nonroot:nonroot
 
-ENV LOGS_TAILER_FOLDER="/var/logs"
-
-CMD ["/logs-tailer", "${LOGS_TAILER_FOLDER}"]
+CMD ["/logs-tailer", "-folder"]
