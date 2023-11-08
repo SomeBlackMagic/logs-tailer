@@ -6,7 +6,6 @@ import (
     "log"
     "os"
     "path/filepath"
-    "sync"
 
     "github.com/fsnotify/fsnotify"
     "github.com/hpcloud/tail"
@@ -22,18 +21,12 @@ func main() {
     flag.Parse()
 
     processedFiles := make(map[string]struct{})
-    var wg sync.WaitGroup
 
     // Processing exist files
     processExistingFiles(*folderPath, processedFiles)
 
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        watchFolder(*folderPath, processedFiles)
-    }()
+    watchFolder(*folderPath, processedFiles)
 
-    wg.Wait()
 }
 
 func processExistingFiles(folderPath string, processedFiles map[string]struct{}) {
