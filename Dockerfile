@@ -41,6 +41,8 @@ COPY --from=busybox:1.35.0-uclibc /bin/chown /bin/chown
 COPY --from=busybox:1.35.0-uclibc /bin/ls /bin/ls
 COPY --from=busybox:1.35.0-uclibc /bin/kill /bin/kill
 COPY --from=busybox:1.35.0-uclibc /bin/echo /bin/echo
+COPY --from=busybox:1.35.0-uclibc /bin/sleep /bin/sleep
+COPY --from=busybox:1.35.0-uclibc /bin/cat /bin/cat
 
 COPY --from=builder /go/src/k8s.io/SomeBlackMagic/logs-tailer/logs-tailer /
 
