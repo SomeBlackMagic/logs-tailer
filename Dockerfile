@@ -45,7 +45,10 @@ COPY --from=busybox:1.35.0-uclibc /bin/echo /bin/echo
 #For debug
 COPY --from=busybox:1.35.0-uclibc /bin/sleep /bin/sleep
 COPY --from=busybox:1.35.0-uclibc /bin/cat /bin/cat
+COPY --from=busybox:1.35.0-uclibc /bin/chmod /bin/chmod
 ADD https://www.busybox.net/downloads/binaries/strace_static_x86_64 /bin/strace
+
+RUN /bin/chmod +x /bin/strace
 
 COPY --from=builder /go/src/k8s.io/SomeBlackMagic/logs-tailer/logs-tailer /
 
