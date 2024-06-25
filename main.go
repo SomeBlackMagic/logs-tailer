@@ -61,19 +61,20 @@ func processExistingFiles(folderPath string, processedFiles map[string]struct{})
 func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		p1, err := procfs.Self()
-		if err != nil {
-			log.Fatalf("could not get process: %s", err)
+		p1, errProc := procfs.Self()
+		if errProc != nil {
+			log.Fatalf("could not get process: %s", errProc)
 		}
 
-		fdinfos, err := p1.FileDescriptorsInfo()
-		if err != nil {
-			log.Fatal(err)
+		fdinfos, errFileDescriptorsInfo := p1.FileDescriptorsInfo()
+		if errFileDescriptorsInfo != nil {
+			log.Fatal(errFileDescriptorsInfo)
 		}
-		l, err1 := fdinfos.InotifyWatchLen()
-		if err1 != nil {
-			log.Fatal("InotifyWatchLen error: ", err1)
+		l, errInotifyWatchLen := fdinfos.InotifyWatchLen()
+		if errInotifyWatchLen != nil {
+			log.Fatal("InotifyWatchLen error: ", errInotifyWatchLen)
 		}
+
 		log.Printf("Watchers %v", l)
 
 		log.Fatalf("Error while creating watcher: %v", err)
