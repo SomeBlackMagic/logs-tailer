@@ -70,9 +70,9 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		l, err := fdinfos.InotifyWatchLen()
-		if err != nil {
-			log.Fatal(err)
+		l, err1 := fdinfos.InotifyWatchLen()
+		if err1 != nil {
+			log.Fatal("InotifyWatchLen error: ", err1)
 		}
 		log.Printf("Watchers %v", l)
 
