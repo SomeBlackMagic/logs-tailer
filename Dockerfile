@@ -33,19 +33,22 @@ RUN go get . && \
 
 ## Use distroless as minimal base image to package the binary
 ## Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:latest
+# FROM gcr.io/distroless/static:latest
 
-COPY --from=busybox:1.35.0-uclibc /bin/sh /bin/sh
-COPY --from=busybox:1.35.0-uclibc /bin/mkdir /bin/mkdir
-COPY --from=busybox:1.35.0-uclibc /bin/chown /bin/chown
-COPY --from=busybox:1.35.0-uclibc /bin/ls /bin/ls
-COPY --from=busybox:1.35.0-uclibc /bin/kill /bin/kill
-COPY --from=busybox:1.35.0-uclibc /bin/echo /bin/echo
+FROM alpine
 
-#For debug
-COPY --from=busybox:1.35.0-uclibc /bin/sleep /bin/sleep
-COPY --from=busybox:1.35.0-uclibc /bin/cat /bin/cat
-COPY --from=busybox:1.35.0-uclibc /bin/chmod /bin/chmod
+# COPY --from=busybox:1.35.0-uclibc /bin/sh /bin/sh
+# COPY --from=busybox:1.35.0-uclibc /bin/mkdir /bin/mkdir
+# COPY --from=busybox:1.35.0-uclibc /bin/chown /bin/chown
+# COPY --from=busybox:1.35.0-uclibc /bin/ls /bin/ls
+# COPY --from=busybox:1.35.0-uclibc /bin/kill /bin/kill
+# COPY --from=busybox:1.35.0-uclibc /bin/echo /bin/echo
+
+# #For debug
+# COPY --from=busybox:1.35.0-uclibc /bin/sleep /bin/sleep
+# COPY --from=busybox:1.35.0-uclibc /bin/cat /bin/cat
+# COPY --from=busybox:1.35.0-uclibc /bin/chmod /bin/chmod
+
 ADD https://www.busybox.net/downloads/binaries/strace_static_x86_64 /bin/strace
 
 RUN /bin/chmod +x /bin/strace
