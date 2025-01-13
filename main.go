@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/prometheus/procfs"
@@ -140,7 +142,44 @@ func processFile(filePath string) {
 	}
 
 	for line := range t.Lines {
-		fmt.Println(fileName + ":" + line.Text)
+		result, err := processJSON(line.Text, fileName)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(result)
+		}
+
 	}
 
+}
+
+func processJSON(input string, file string) (string, error) {
+	// Verify if input is valid JSON
+
+	// Parse input JSON into a map to access keys and values
+	var jsonData map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(input), &jsonData); err != nil {
+		return file + ":" + input, nil
+	}
+
+	// Prepare ordered JSON
+	var buffer bytes.Buffer
+	buffer.WriteString("{")
+	buffer.WriteString(fmt.Sprintf(`"file":%q`, file))
+	buffer.WriteString(",")
+
+	first := true
+	for key, value := range jsonData {
+		if !first {
+			buffer.WriteString(",")
+		}
+		first = false
+		buffer.WriteString(fmt.Sprintf(`%q:%s`, key, value))
+	}
+
+	// Append the new field "file" at the end
+
+	buffer.WriteString("}")
+
+	return buffer.String(), nil
 }
