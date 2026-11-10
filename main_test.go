@@ -110,6 +110,24 @@ func TestProcessFileReleasesDescriptorOnDelete(t *testing.T) {
 	}
 }
 
+// A file discovered but deleted before its tailer started must not leave the
+// goroutine waiting forever for the file to appear.
+func TestProcessFileReturnsWhenFileIsMissing(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "short-lived.log")
+
+	done := make(chan struct{})
+	go func() {
+		processFile(path, &safeBuffer{})
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("processFile did not return for a missing file")
+	}
+}
+
 // A file that is deleted and then created again with the same name must be
 // tailed again by a new tailer.
 func TestWatchFolderPicksUpRecreatedFile(t *testing.T) {

@@ -146,10 +146,14 @@ func processFile(filePath string, out io.Writer) {
 	// are deleted and never come back. With ReOpen the tail would wait forever for
 	// the file to reappear, leaking this goroutine. Without it the tail stops on
 	// delete/rename, closes its file descriptor and the Lines channel.
+	//
+	// MustExist makes TailFile open the file right away and fail if it is
+	// already gone (short-lived file deleted before this goroutine ran).
+	// Without it the first open is deferred and waits forever for the path.
 	t, err := tail.TailFile(filePath, tail.Config{
 		Follow:    true,
 		ReOpen:    false,
-		MustExist: false,
+		MustExist: true,
 		Poll:      true,
 	})
 	if err != nil {
