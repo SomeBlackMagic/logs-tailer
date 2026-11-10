@@ -107,6 +107,11 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 					processedFiles[filePath] = struct{}{}
 				}
 			}
+			// Forget removed/renamed files so a file re-created with the same
+			// name is picked up again.
+			if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 {
+				delete(processedFiles, event.Name)
+			}
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
@@ -119,27 +124,24 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 
 func processFile(filePath string) {
 	fmt.Println("New file created:", filePath)
-	file, err := os.Open(filePath)
-	if err != nil {
-		fmt.Println("Can not open file: ", err)
-		return
-	}
-	defer file.Close()
 
 	fileName := filepath.Base(filePath)
 
+	// ReOpen is disabled on purpose: rotated files (e.g. deprecation-YYYY-MM-DD.log)
+	// are deleted and never come back. With ReOpen the tail would wait forever for
+	// the file to reappear, leaking this goroutine. Without it the tail stops on
+	// delete/rename, closes its file descriptor and the Lines channel.
 	t, err := tail.TailFile(filePath, tail.Config{
 		Follow:    true,
-		ReOpen:    true,
+		ReOpen:    false,
 		MustExist: false,
 		Poll:      true,
 	})
-	defer t.Cleanup()
-
 	if err != nil {
 		log.Printf("Error to create log journal: %v", err)
 		return
 	}
+	defer t.Cleanup()
 
 	for line := range t.Lines {
 		result, err := processJSON(line.Text, fileName)
