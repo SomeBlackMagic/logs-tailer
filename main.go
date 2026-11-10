@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/prometheus/procfs"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -40,27 +42,38 @@ func main() {
 	processedFiles := make(map[string]struct{})
 
 	// Processing exist files
-	processExistingFiles(*folderPath, processedFiles)
+	processExistingFiles(*folderPath, processedFiles, os.Stdout)
 
-	watchFolder(*folderPath, processedFiles)
+	watcher := newFolderWatcher(*folderPath)
+	defer func(watcher *fsnotify.Watcher) {
+		err := watcher.Close()
+		if err != nil {
+			log.Fatalf("Can not close watcher: %v", err)
+		}
+	}(watcher)
+
+	watchFolder(context.Background(), watcher, processedFiles, os.Stdout)
 
 }
 
-func processExistingFiles(folderPath string, processedFiles map[string]struct{}) {
+func processExistingFiles(folderPath string, processedFiles map[string]struct{}, out io.Writer) {
 	filepath.Walk(folderPath, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("Error while walking through files : %v", err)
 			return err
 		}
 		if !info.IsDir() {
-			go processFile(filePath)
+			go processFile(filePath, out)
 			processedFiles[filePath] = struct{}{}
 		}
 		return nil
 	})
 }
 
-func watchFolder(folderPath string, processedFiles map[string]struct{}) {
+// newFolderWatcher creates an fsnotify watcher subscribed to folderPath.
+// The subscription is done synchronously so that no event is missed
+// between this call and the start of watchFolder.
+func newFolderWatcher(folderPath string) *fsnotify.Watcher {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		p1, errProc := procfs.Self()
@@ -81,20 +94,22 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 
 		log.Fatalf("Error while creating watcher: %v", err)
 	}
-	defer func(watcher *fsnotify.Watcher) {
-		err := watcher.Close()
-		if err != nil {
-			log.Fatalf("Can not close watcher: %v", err)
-		}
-	}(watcher)
 
 	err = watcher.Add(folderPath)
 	if err != nil {
 		log.Fatalf("Error while adding folder for monitoring: %v", err)
 	}
 
+	return watcher
+}
+
+// watchFolder handles watcher events until ctx is cancelled or the watcher is closed.
+func watchFolder(ctx context.Context, watcher *fsnotify.Watcher, processedFiles map[string]struct{}, out io.Writer) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
+
 		case event, ok := <-watcher.Events:
 			if !ok {
 				return
@@ -103,7 +118,7 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 				filePath := event.Name
 				_, processed := processedFiles[filePath]
 				if !processed {
-					go processFile(filePath)
+					go processFile(filePath, out)
 					processedFiles[filePath] = struct{}{}
 				}
 			}
@@ -122,8 +137,8 @@ func watchFolder(folderPath string, processedFiles map[string]struct{}) {
 	}
 }
 
-func processFile(filePath string) {
-	fmt.Println("New file created:", filePath)
+func processFile(filePath string, out io.Writer) {
+	fmt.Fprintln(out, "New file created:", filePath)
 
 	fileName := filepath.Base(filePath)
 
@@ -146,9 +161,9 @@ func processFile(filePath string) {
 	for line := range t.Lines {
 		result, err := processJSON(line.Text, fileName)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(out, err)
 		} else {
-			fmt.Println(result)
+			fmt.Fprintln(out, result)
 		}
 
 	}
